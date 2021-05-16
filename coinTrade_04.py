@@ -6,8 +6,8 @@ import math
 import sys
 import pandas as pd
 
-access = ""          # 본인 값으로 변경
-secret = ""          # 본인 값으로 변경
+access = "oiOnPoXqQhTjbERXh2padaW0mmHk3Sy6jR24FXRV"          # 본인 값으로 변경
+secret = "dzf0R5aUVhkleD5zmfwYQuLEOIB7cjDf1PmEjIYd"          # 본인 값으로 변경
 upbit = pyupbit.Upbit(access, secret)
 
 ########################################################################################################
@@ -228,19 +228,20 @@ def check_orderlist():
 #-------------------------------------------------------------------------------------------------------
 # 기본설정세팅
 #-------------------------------------------------------------------------------------------------------
+
+# 매매코인설정
+Deal_Coin = ""
+
 # INPUT 값 받기 
 coin = sys.argv[1]
+Deal_Coin = coin
 
-if coin != "":
-    Deal_Coin = coin
+if Deal_Coin != "":
     print("Deal_Coin : " + Deal_Coin)
 else :
     print("Deal_Coin : None!!" )
     exit
-    
 
-# 매매코인설정
-# Deal_Coin = "ETH"
 Control_Coin = "KRW-" + Deal_Coin
 
 # 로그파일생성
@@ -334,8 +335,8 @@ while True:
         #-------------------------------------------------------------------------------------------------------
         #  매매 캔들 기초데이터 조회 (코인종목, 인터벌)
         #-------------------------------------------------------------------------------------------------------
-        df_15 = analyze_coin_timedata(Control_Coin, "minute15")
-        print(df_15[loop-10:loop])
+        # df_15 = analyze_coin_timedata(Control_Coin, "minute15")
+        # print(df_15[loop-10:loop])
         df = analyze_coin_timedata(Control_Coin, "minute1")
         print(df[loop-10:loop])
         print("--------------------------------------------------------------------------------")
@@ -358,6 +359,7 @@ while True:
             expect_rate = round(( price  - item_avg_buy_price ) / item_avg_buy_price * 100, 3)
 
         print("item_qty   : " + str(item_qty) + " , item_avg_buy_price = " + str(item_avg_buy_price) + " , expect_rate = " + str(expect_rate))
+        print("price      : " + str(price) + str(expect_rate) + " , price_rate = " + str(price_rate))
 
         #-------------------------------------------------------------------------------------------------------
         # 매입가능포지션여부, 매도가능포지션여부
@@ -388,7 +390,9 @@ while True:
         # 현재 잔고 상태에 따른 매도/매수 포지션 체크    
         print("* sell_pos : [ " + sell_pos + " ], buy_pos : [ " + buy_pos + " ] ************************")
 
-        sign_action = ""        
+        # sign_action = ""        
+        sign_action_mesu = ""   
+        sign_action_medo = "" 
         sign_action_add = ""
         sign_sell_from_type = 0
         #-------------------------------------------------------------------------------------------------------
@@ -400,29 +404,29 @@ while True:
             if df.iloc[loop -2]['v_pm'] > 0 and df.iloc[loop -2]['rate'] < price_rate * (-1) :
                 sign_sell_from_type = 11
                 sign_sell_rate = 1
-                sign_action = "SELL"
+                sign_action_medo = "SELL"
         
         # 매도 전략 2: 하락분봉 1개뜨고 그다음 현재시그널이 하락인경우
         if sell_pos == "Y" and  df.iloc[loop -3]['v_rsi_real'] > 60:
             if df.iloc[loop -3]['v_pm'] > 0 and  df.iloc[loop -2]['v_pm'] < 0 and price_rate < -0.1 :            
                 sign_sell_from_type = 12
                 sign_sell_rate = 1
-                sign_action = "SELL"
+                sign_action_medo = "SELL"
         
         # 매도 전략 3 : 원화 잔고가 보유코인잔고의 평가금액의 절반정도 되는 시점에는 현금비중조절이 필요함 
         if  sell_pos == "Y" and  krw_base < item_qty * item_avg_buy_price / 2  and expect_rate < 0:
             if  df.iloc[loop -2]['v_rsi_real'] > 40 and expect_rate > -1 :
                 sign_sell_from_type = 14
                 sign_sell_rate = 0.3
-                sign_action = "SELL"
+                sign_action_medo = "SELL"
             elif df.iloc[loop -2]['v_rsi_real'] > 40 and  expect_rate > -2 :
                 sign_sell_from_type = 14
                 sign_sell_rate = 0.4
-                sign_action = "SELL"
+                sign_action_medo = "SELL"
             elif df.iloc[loop -2]['v_rsi_real'] > 40 and  expect_rate > -3 :
                 sign_sell_from_type = 14
                 sign_sell_rate = 0.5
-                sign_action = "SELL"
+                sign_action_medo = "SELL"
 
 
         #-------------------------------------------------------------------------------------------------------
@@ -575,25 +579,25 @@ while True:
         if buy_pos == "Y" and  df.iloc[loop -3]['v_rsi_real'] < 40:
             if df.iloc[loop -2]['v_pm'] > 0 and df.iloc[loop -3]['v_pm'] > 0 :
                 sign_buy_from_type = 1
-                sign_action = "BUY"  
+                sign_action_mesu = "BUY"  
                 bef_buy_check_strong = df.iloc[loop -3]['v_strong']
             if df.iloc[loop -3]['v_pm'] <= 0 and df.iloc[loop -2]['v_pm'] > 0 and df.iloc[loop -2]['rate'] > df.iloc[loop -3]['rate'] * (-1) :
                 sign_buy_from_type = 1
-                sign_action = "BUY"  
+                sign_action_mesu = "BUY"  
                 bef_buy_check_strong = df.iloc[loop -3]['v_strong']
 
 
         # 매수전략 1 : 직전 2,3,4 구간이 상승이고, 이전 하방마지막 강도가 -3이하이면 매수 시도
         if df.iloc[loop -2]['v_pm'] > 0 and df.iloc[loop -3]['v_pm'] > 0 and df.iloc[loop -4]['v_pm'] > 0 and df.iloc[loop -5]['v_strong'] <= -3 :
             sign_buy_from_type = 1
-            sign_action = "BUY"    
+            sign_action_mesu = "BUY"    
             # 매수직전 하방의 강도를 남겨둔다.
             bef_buy_check_strong = df.iloc[loop -5]['v_strong']
 
         # 매수전략 1 :  직전 2,3 구간이 상승이고, 직전 4 구간이 하방인데 강도가 -5이하인경우 매수시도
         if df.iloc[loop -2]['v_pm'] > 0 and df.iloc[loop -3]['v_pm'] > 0 and df.iloc[loop -4]['v_pm'] < 0 and df.iloc[loop -4]['v_strong'] <= -5 :
             sign_buy_from_type = 2
-            sign_action = "BUY"    
+            sign_action_mesu = "BUY"    
             # 매수직전 하방의 강도를 남겨둔다.
             bef_buy_check_strong = df.iloc[loop -4]['v_strong']
 
@@ -602,14 +606,14 @@ while True:
         # 매수전략 2 :  직전 2,3,4 구간이 상승이고, 직전 3구간의 상승폭이 7 % 미만인경우 매수 시도
         if df.iloc[loop -2]['v_pm'] > 0 and df.iloc[loop -3]['v_pm'] > 0 and df.iloc[loop -4]['v_pm'] > 0 and df.iloc[loop -2]['rate'] + df.iloc[loop -3]['rate'] + df.iloc[loop -4]['rate'] < 7 :
             sign_buy_from_type = 3
-            sign_action = "BUY"    
+            sign_action_mesu = "BUY"    
             # 매수직전 하방의 강도를 남겨둔다.
             bef_buy_check_strong = df.iloc[loop -4]['v_strong']
             
         # 매수전략 3 : 직전 2,3 구간이 상승이고, rsr 가 30 이하이면 매수시도!
         if df.iloc[loop -1]['v_pm'] > 0 and df.iloc[loop -2]['v_pm'] > 0 and df.iloc[loop -3]['v_rsi_real'] <= 40 :
             sign_buy_from_type = 4
-            sign_action = "BUY"    
+            sign_action_mesu = "BUY"    
             # 매수직전 하방의 강도를 남겨둔다.
             bef_buy_check_strong = df.iloc[loop -4]['v_strong']
 
@@ -622,12 +626,12 @@ while True:
         #-------------------------------------------------------------------------------------------------------
         # 매매 요청 주문
         #-------------------------------------------------------------------------------------------------------
-        print("-->> sign_action = [ "+ sign_action +" ]" + ",    sign_action_add = [ "+ sign_action_add +" ]") 
+        print("-->> sign_action_medo = [ "+ sign_action_medo +" ]" + ",    sign_action_mesu = [ "+ sign_action_mesu +" ]" + ",    sign_action_add = [ "+ sign_action_add +" ]") 
           
           
         #-------------------------------------------------------------------------------------------------------
         # 매도  
-        if sell_pos == "Y" and sign_action == "SELL" :
+        if sell_pos == "Y" and sign_action_medo == "SELL" :
             print("매도~ 주문!!!!!!!!!!!")
 
             # 테스트매매시
@@ -671,7 +675,7 @@ while True:
 
         #-------------------------------------------------------------------------------------------------------
         # 매수 
-        if buy_pos == "Y" and sign_action == "BUY" :
+        if buy_pos == "Y" and sign_action_mesu == "BUY" :
             print("매수타이밍!")    
             
             # 테스트매매시
