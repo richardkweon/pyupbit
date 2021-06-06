@@ -6,8 +6,8 @@ import math
 import sys
 import pandas as pd
 
-access = "oiOnPoXqQhTjbERXh2padaW0mmHk3Sy6jR24FXRV"          # 본인 값으로 변경
-secret = "dzf0R5aUVhkleD5zmfwYQuLEOIB7cjDf1PmEjIYd"          # 본인 값으로 변경
+access = ""          # 본인 값으로 변경
+secret = ""          # 본인 값으로 변경
 upbit = pyupbit.Upbit(access, secret)
 
 #-------------------------------------------------------------------------------------------------------
